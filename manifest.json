@@ -6,6 +6,12 @@
   "background": {
     "service_worker": "src/background.js"
   },
+  "content_scripts": [
+    {
+      "js": ["src/content.js"],
+      "matches": ["<all_urls>"]
+    }
+  ],
   "side_panel": {
     "default_path": "slider.html"
   },

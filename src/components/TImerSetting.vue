@@ -33,11 +33,9 @@ const cannelTimer = async () => {
   // 关闭定时器选择窗口
   // TODO
   const res = await chromeApi.sendMessage({
-    action: 'forwardToPopup',
+    action: 'forwardToContentScript',
     data: {
-      action: 'applyTheme',
-      theme: 'dark',
-      selector: '.content'
+      action: 'timer.open',
     }
   })
   console.log(res)

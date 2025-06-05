@@ -1,18 +1,17 @@
 <script setup>
-import HelloWorld from '../components/HelloWorld.vue'
+// 侧栏页面
 </script>
 
 <template>
   <div>
-    侧栏
+    <h1>侧栏</h1>
     <a href="https://vite.dev" target="_blank">
       <img src="/vite.svg" class="logo" alt="Vite logo" />
     </a>
     <a href="https://vuejs.org/" target="_blank">
-      <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
+      <img src="../assets/vue.svg" class="logo vue" alt="Vue logo" />
     </a>
   </div>
-  <HelloWorld msg="Vite + Vue" />
 </template>
 
 <style scoped>
