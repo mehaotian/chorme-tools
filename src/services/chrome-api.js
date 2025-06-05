@@ -17,12 +17,26 @@ export class ChromeApiService {
   }
 
   /**
-   * 发送消息到background script
-   * @param {Object} message - 消息对象
+   * 发送消息到background script（新的简化格式）
+   * @param {Object} data - 消息数据
+   * @param {string} target - 可选的目标类型（content, popup, sidepanel, broadcast）
    * @param {number} timeout - 超时时间(毫秒)
    * @returns {Promise<any>} 响应结果
    */
-  async sendMessage(message, timeout = 5000) {
+  async sendMessage(data, target = null, timeout = 5000) {
+    // 如果第一个参数是完整的消息对象（向后兼容）
+    if (data && typeof data === 'object' && data.action && data.action !== 'message') {
+      return this.sendMessageLegacy(data, target || timeout);
+    }
+
+    const message = {
+      action: 'message',
+      data: data,
+      target: target,
+      messageId: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      timestamp: Date.now()
+    };
+
     return new Promise((resolve, reject) => {
       const timeoutId = setTimeout(() => {
         reject(new Error('消息发送超时'));
@@ -47,17 +61,53 @@ export class ChromeApiService {
   }
 
   /**
-   * 带重试机制的消息发送
-   * @param {Object} message - 消息对象
+   * 发送消息到background script（旧格式，向后兼容）
+   * @param {Object} message - 完整的消息对象
+   * @param {number} timeout - 超时时间(毫秒)
+   * @returns {Promise<any>} 响应结果
+   */
+  async sendMessageLegacy(message, timeout = 5000) {
+    return new Promise((resolve, reject) => {
+      const timeoutId = setTimeout(() => {
+        reject(new Error('消息发送超时'));
+      }, timeout);
+
+      try {
+        chrome.runtime.sendMessage(message, (response) => {
+          clearTimeout(timeoutId);
+          
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+            return;
+          }
+          
+          resolve(response);
+        });
+      } catch (error) {
+        clearTimeout(timeoutId);
+        reject(error);
+      }
+    });
+  }
+
+  /**
+   * 带重试机制的消息发送（新格式）
+   * @param {Object} data - 消息数据
+   * @param {string} target - 可选的目标类型
    * @param {number} maxRetries - 最大重试次数
    * @returns {Promise<any>} 响应结果
    */
-  async sendMessageWithRetry(message, maxRetries = this.retryCount) {
+  async sendMessageWithRetry(data, target = null, maxRetries = this.retryCount) {
+    // 如果第一个参数是完整的消息对象（向后兼容）
+    if (data && typeof data === 'object' && data.action && data.action !== 'message') {
+      return this.sendMessageWithRetryLegacy(data, target || maxRetries);
+    }
+
     let lastError;
     
     for (let i = 0; i <= maxRetries; i++) {
       try {
-        return await this.sendMessage(message);
+        return await this.sendMessage(data, target);
       } catch (error) {
         lastError = error;
         
@@ -77,16 +127,45 @@ export class ChromeApiService {
   }
 
   /**
-   * 验证CSS选择器
+   * 带重试机制的消息发送（旧格式，向后兼容）
+   * @param {Object} message - 完整的消息对象
+   * @param {number} maxRetries - 最大重试次数
+   * @returns {Promise<any>} 响应结果
+   */
+  async sendMessageWithRetryLegacy(message, maxRetries = this.retryCount) {
+    let lastError;
+    
+    for (let i = 0; i <= maxRetries; i++) {
+      try {
+        return await this.sendMessageLegacy(message);
+      } catch (error) {
+        lastError = error;
+        
+        if (i < maxRetries) {
+          // 消息发送失败通常是页面切换导致的正常情况
+        if (typeof ErrorHandler !== 'undefined') {
+          ErrorHandler.softError(`消息发送失败，正在重试 (${i + 1}/${maxRetries})`, error.message);
+        } else if (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'development') {
+          console.warn(`[Debug] 消息发送失败，正在重试 (${i + 1}/${maxRetries}):`, error.message);
+        }
+          await this.delay(this.retryDelay * (i + 1));
+        }
+      }
+    }
+    
+    throw lastError;
+  }
+
+  /**
+   * 验证CSS选择器（新格式）
    * @param {string} selector - CSS选择器
    * @returns {Promise<Object>} 验证结果
    */
   async validateSelector(selector) {
     try {
       const response = await this.sendMessageWithRetry({
-        action: "pageBeautify",
-        type: "VALIDATE_SELECTOR",
-        data: { selector }
+        action: "pageBeautify.validateSelector",
+        selector: selector
       });
       
       return {
@@ -106,16 +185,15 @@ export class ChromeApiService {
   }
 
   /**
-   * 应用主题到页面
+   * 应用主题到页面（新格式）
    * @param {Object} theme - 主题数据
    * @returns {Promise<boolean>} 是否成功
    */
   async applyTheme(theme) {
     try {
       const response = await this.sendMessageWithRetry({
-        action: "pageBeautify",
-        type: "APPLY_THEME",
-        data: theme
+        action: "pageBeautify.applyTheme",
+        theme: theme
       });
       
       return response?.success || false;
@@ -127,14 +205,13 @@ export class ChromeApiService {
   }
 
   /**
-   * 清除页面样式
+   * 清除页面样式（新格式）
    * @returns {Promise<boolean>} 是否成功
    */
   async clearStyles() {
     try {
       const response = await this.sendMessageWithRetry({
-        action: "pageBeautify",
-        type: "CLEAR_STYLES"
+        action: "pageBeautify.clearStyles"
       });
       
       return response?.success || false;
@@ -154,7 +231,7 @@ export class ChromeApiService {
   }
 
   /**
-   * 实时预览样式
+   * 实时预览样式（新格式）
    * @param {string} selector - CSS选择器
    * @param {string} property - CSS属性名
    * @param {string} value - CSS属性值
@@ -163,9 +240,10 @@ export class ChromeApiService {
   async previewStyle(selector, property, value) {
     try {
       const response = await this.sendMessage({
-        action: "pageBeautify",
-        type: "PREVIEW_STYLE",
-        data: { selector, property, value }
+        action: "pageBeautify.previewStyle",
+        selector: selector,
+        property: property,
+        value: value
       });
       
       return response?.success || false;
@@ -176,7 +254,7 @@ export class ChromeApiService {
   }
 
   /**
-   * 清除特定属性的预览效果
+   * 清除特定属性的预览效果（新格式）
    * @param {string} selector - CSS选择器
    * @param {string} property - CSS属性名
    * @returns {Promise<boolean>} 是否成功
@@ -184,9 +262,9 @@ export class ChromeApiService {
   async clearPreviewProperty(selector, property) {
     try {
       const response = await this.sendMessage({
-        action: "pageBeautify",
-        type: "CLEAR_PREVIEW_PROPERTY",
-        data: { selector, property }
+        action: "pageBeautify.clearPreviewProperty",
+        selector: selector,
+        property: property
       });
       
       return response?.success || false;
@@ -197,14 +275,13 @@ export class ChromeApiService {
   }
 
   /**
-   * 清除所有预览效果
+   * 清除所有预览效果（新格式）
    * @returns {Promise<boolean>} 是否成功
    */
   async clearAllPreview() {
     try {
       const response = await this.sendMessage({
-        action: "pageBeautify",
-        type: "CLEAR_ALL_PREVIEW"
+        action: "pageBeautify.clearAllPreview"
       });
       
       return response?.success || false;
@@ -215,7 +292,7 @@ export class ChromeApiService {
   }
 
   /**
-   * 应用CSS样式到页面（通过CSS注入）
+   * 应用CSS样式到页面（新格式）
    * @param {string} css - CSS代码
    * @param {string} styleId - 样式ID
    * @returns {Promise<boolean>} 是否成功
@@ -223,9 +300,9 @@ export class ChromeApiService {
   async applyStyles(css, styleId) {
     try {
       const response = await this.sendMessageWithRetry({
-        action: "pageBeautify",
-        type: "APPLY_CSS",
-        data: { css, styleId }
+        action: "pageBeautify.applyStyles",
+        css: css,
+        styleId: styleId
       });
       
       return response?.success || false;
@@ -237,15 +314,13 @@ export class ChromeApiService {
   }
 
   /**
-   * 清除选择器高亮效果
+   * 清除选择器高亮效果（新格式）
    * @returns {Promise<boolean>} 是否成功
    */
   async clearSelectorHighlight() {
     try {
       const response = await this.sendMessage({
-        action: "pageBeautify",
-        type: "CLEAR_SELECTOR_HIGHLIGHT",
-        data: {}
+        action: "pageBeautify.clearSelectorHighlight"
       });
       
       return response?.success || false;

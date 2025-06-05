@@ -6,7 +6,15 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "port:check": "node -e \"const { isPortAvailable } = require('./src/utils/portManager.js'); isPortAvailable(5173).then(available => console.log('Port 5173 available:', available));\"",
+    "port:find": "node -e \"const { findAvailablePort } = require('./src/utils/portManager.js'); findAvailablePort(5173).then(port => console.log('Available port:', port));\"",
+    "port:test": "node scripts/test-ports.js",
+    "port:test:interactive": "node scripts/test-ports.js --interactive",
+    "message:test": "echo '请在 Chrome 扩展控制台中运行: loadScript(\"test-message-routing.js\"); 然后执行: new MessageRoutingTester().runAllTests();'",
+    "message:docs": "echo '查看消息路由文档: MESSAGE_ROUTING.md'",
+    "message:simple": "echo '查看简化消息系统指南: SIMPLIFIED_MESSAGING.md'",
+    "message:examples": "echo '查看消息格式对比示例: examples/message-format-comparison.js'"
   },
   "dependencies": {
     "vue": "^3.5.13"

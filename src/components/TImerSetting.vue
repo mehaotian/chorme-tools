@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue'
-import { chromeApi} from "../services/chrome-api";
+import { chromeApi } from "../services/chrome-api";
 // tab 状态
 let currentTab = ref('preset')
 // 时间状态
@@ -29,10 +29,18 @@ const selectTime = (minutes) => {
 /**
  * 关闭窗口
  */
-const cannelTimer = () => {
+const cannelTimer = async () => {
   // 关闭定时器选择窗口
   // TODO
-  chromeApi.sendMessage({ action: 'closeTimerSetting' })
+  const res = await chromeApi.sendMessage({
+    action: 'forwardToPopup',
+    data: {
+      action: 'applyTheme',
+      theme: 'dark',
+      selector: '.content'
+    }
+  })
+  console.log(res)
 }
 
 
