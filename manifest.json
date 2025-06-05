@@ -3,6 +3,9 @@
   "name": "CRXJS Vanilla JS Example",
   "version": "1.0.0",
   "action": { "default_popup": "index.html" },
+  "background": {
+    "service_worker": "src/background.js"
+  },
   "side_panel": {
     "default_path": "slider.html"
   },

@@ -1,10 +1,29 @@
 <script setup>
-import { ref } from 'vue'
+import TImerSetting from '../components/TImerSetting.vue';
+const clickHandler = (type) => {
+  switch (type) {
+    // 自律提醒
+    case 'reading':
 
-const onClick = () => {
-  openSidebar()
+      break;
+    // 统计字数
+    case 'stat':
+      // TODO 待实现
+      break;
+    // 页面美化
+    case 'beautify':
+      openSidebar();
+      break;
+    default:
+      break;
+  }
 }
 
+/**
+ * 打开侧栏
+ * 
+ * @return {*}
+ */
 async function openSidebar() {
   await chrome.sidePanel.open({ windowId: (await chrome.windows.getCurrent()).id });
 
@@ -23,7 +42,7 @@ async function openSidebar() {
       <p class="subtitle">L 站小助手，聚合多种常规小功能</p>
     </div>
 
-    <div class="feature-list">
+    <div class="feature-list" @click="clickHandler('reading')">
       <div class="feature-item" data-feature="reading-time">
         <div class="feature-icon">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -42,7 +61,7 @@ async function openSidebar() {
         </div>
       </div>
 
-      <div class="feature-item" data-feature="word-count">
+      <!-- <div class="feature-item" data-feature="word-count" @click="clickHandler('word')">
         <div class="feature-icon">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -78,9 +97,9 @@ async function openSidebar() {
             <polyline points="9,18 15,12 9,6" />
           </svg>
         </div>
-      </div>
+      </div> -->
 
-      <div class="feature-item" data-feature="page-beautify">
+      <div class="feature-item" data-feature="page-beautify" @click="clickHandler('beautify')">
         <div class="feature-icon">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
@@ -121,11 +140,11 @@ async function openSidebar() {
     <div class="footer">
       <p class="version">版本 1.0</p>
     </div>
+    <TImerSetting></TImerSetting>
   </div>
 </template>
 
 <style scoped>
-
 .popup-container {
   /* padding: 20px; */
   display: flex;
