@@ -1,4 +1,4 @@
-# Chrome 扩展智能消息路由系统
+# Chrome 扩展消息路由系统
 
 本文档介绍了 Chrome 扩展中全新的智能消息路由系统，支持 popup、content-scripts、侧栏等组件间的高效通信。
 
@@ -26,7 +26,7 @@
 
 ## 🏗️ 系统架构
 
-```
+```base
 ┌─────────────┐    ┌─────────────────┐    ┌─────────────┐
 │   Popup     │◄──►│   Background    │◄──►│ Content     │
 │   页面      │    │   消息路由器     │    │ Scripts     │
@@ -63,10 +63,12 @@
 
 系统会自动识别发送者并选择合适的目标：
 
-- **Popup** → 自动发送到 **Content Script**
-- **Content Script** → 自动发送到 **Popup**
-- **Sidepanel** → 自动发送到 **Content Script**
-- **Background** → 根据消息内容智能选择目标
+| 发送者 | 默认目标 | 说明 |
+|--------|----------|------|
+| Popup | Content Script | Popup 的消息默认发送到当前标签页的 Content Script |
+| Content Script | Popup | Content Script 的消息默认发送到 Popup |
+| Sidepanel | Content Script | Sidebar 的消息默认发送到当前标签页的 Content Script |
+| Background | 根据消息内容 | Background 根据消息类型智能路由 |
 
 ### 🔄 向后兼容的消息格式
 
@@ -86,6 +88,7 @@
 
 | Action | 描述 | 用途 |
 |--------|------|------|
+| `message` / `send` | 智能路由消息 | 自动识别发送者并路由到合适目标 |
 | `forwardToContentScript` | 转发到内容脚本 | Popup/Sidebar → Content Script |
 | `forwardToPopup` | 转发到弹窗页面 | Content Script → Popup |
 | `forwardToSidePanel` | 转发到侧栏页面 | Content Script → Sidebar |
@@ -182,7 +185,7 @@ chrome.runtime.sendMessage(message, (response) => {
 });
 ```
 
-### 2. 从 Content Script 发送消息到 Popup
+#### 2. 从 Content Script 发送消息到 Popup
 
 ```javascript
 // content-script.js
@@ -202,7 +205,7 @@ chrome.runtime.sendMessage(message, (response) => {
 });
 ```
 
-### 3. 广播消息到所有组件
+#### 3. 广播消息到所有组件
 
 ```javascript
 // 任意组件
@@ -221,7 +224,150 @@ chrome.runtime.sendMessage(broadcastMessage, (response) => {
 });
 ```
 
-### 4. 存储操作
+## 🎯 使用 ChromeApiService（推荐）
+
+为了进一步简化使用，推荐使用封装好的 `ChromeApiService`：
+
+```javascript
+import { chromeApi } from './src/services/chrome-api.js';
+
+// 应用主题（自动路由到 Content Script）
+await chromeApi.applyTheme({
+  name: 'dark',
+  colors: { background: '#1a1a1a' }
+});
+
+// 清除样式
+await chromeApi.clearStyles();
+
+// 预览样式
+await chromeApi.previewStyle('.header', 'background-color', '#333');
+
+// 发送自定义消息
+await chromeApi.sendMessage({
+  action: 'customAction',
+  data: { key: 'value' }
+}, 'sidepanel'); // 可选指定目标
+```
+
+## 📝 使用示例
+
+### Popup 页面
+
+```javascript
+// popup.js
+import { chromeApi } from '../services/chrome-api.js';
+
+class PopupController {
+  async applyDarkTheme() {
+    try {
+      // 自动路由到 Content Script
+      const result = await chromeApi.applyTheme({
+        name: 'dark',
+        colors: {
+          background: '#1a1a1a',
+          text: '#ffffff'
+        }
+      });
+      
+      if (result) {
+        console.log('✅ 主题应用成功');
+      }
+    } catch (error) {
+      console.error('❌ 主题应用失败:', error);
+    }
+  }
+  
+  async sendToSidebar() {
+    try {
+      // 明确指定目标为侧栏
+      const result = await chromeApi.sendMessage({
+        action: 'updateSidebar',
+        data: { message: 'Hello from Popup' }
+      }, 'sidepanel');
+      
+      console.log('✅ 消息发送到侧栏成功:', result);
+    } catch (error) {
+      console.error('❌ 消息发送失败:', error);
+    }
+  }
+}
+```
+
+### Content Script
+
+```javascript
+// content-script.js
+import { chromeApi } from '../services/chrome-api.js';
+
+class ContentController {
+  async sendAnalysisResult() {
+    try {
+      // 自动路由到 Popup
+      const result = await chromeApi.sendMessage({
+        action: 'pageAnalyzed',
+        payload: {
+          title: document.title,
+          url: window.location.href,
+          elementCount: document.querySelectorAll('*').length
+        }
+      });
+      
+      console.log('✅ 分析结果发送成功:', result);
+    } catch (error) {
+      console.error('❌ 分析结果发送失败:', error);
+    }
+  }
+  
+  async broadcastUpdate() {
+    try {
+      // 广播消息到所有组件
+      const result = await chromeApi.sendMessage({
+        action: 'pageUpdated',
+        payload: { timestamp: Date.now() }
+      }, 'broadcast');
+      
+      console.log('✅ 广播消息发送成功:', result);
+    } catch (error) {
+      console.error('❌ 广播消息发送失败:', error);
+    }
+  }
+}
+```
+
+### Sidebar 页面
+
+```javascript
+// sidebar.js
+import { chromeApi } from '../services/chrome-api.js';
+
+class SidebarController {
+  async requestPageInfo() {
+    try {
+      // 自动路由到 Content Script
+      const result = await chromeApi.sendMessage({
+        action: 'getPageInfo',
+        fields: ['title', 'url', 'description']
+      });
+      
+      console.log('✅ 页面信息获取成功:', result);
+      this.updateUI(result.data);
+    } catch (error) {
+      console.error('❌ 页面信息获取失败:', error);
+    }
+  }
+  
+  updateUI(pageInfo) {
+    // 更新侧栏 UI
+    document.getElementById('page-title').textContent = pageInfo.title;
+    document.getElementById('page-url').textContent = pageInfo.url;
+  }
+}
+```
+
+## 🔧 高级功能
+
+### 1. 存储操作
 
 ```javascript
 // 保存数据
@@ -258,7 +404,7 @@ chrome.runtime.sendMessage(getMessage, (response) => {
 });
 ```
 
-### 5. 标签页操作
+### 2. 标签页操作
 
 ```javascript
 // 查询标签页
@@ -289,7 +435,7 @@ const reloadMessage = {
 chrome.runtime.sendMessage(reloadMessage);
 ```
 
-### 6. 系统消息
+### 3. 系统消息
 
 ```javascript
 // Ping 测试
@@ -327,9 +473,7 @@ chrome.runtime.sendMessage(queueMessage, (response) => {
 });
 ```
 
-## 🔧 高级功能
-
-### 消息队列机制
+### 4. 消息队列机制
 
 由于 Popup 和 Sidebar 页面可能不总是活跃状态，系统提供了消息队列机制：
 
@@ -352,7 +496,34 @@ window.addEventListener('load', async () => {
 });
 ```
 
-### 错误处理
+## 🛠️ 调试和监控
+
+### 1. 控制台日志
+
+系统会在 Background Script 的控制台中输出详细的日志信息：
+
+```base
+📡 消息路由器已初始化
+📋 [2024-01-01T12:00:00.000Z] RECEIVED: {
+  messageId: "msg_1704110400000_abc123",
+  action: "message",
+  sender: { ... }
+}
+🎯 智能路由: popup -> content
+📋 [2024-01-01T12:00:00.100Z] RESPONSE: {
+  success: true,
+  target: "content-script",
+  tabId: 123
+}
+```
+
+### 2. 开发者工具
+
+1. 打开 Chrome 扩展管理页面
+2. 找到你的扩展，点击「检查视图」→「背景页」
+3. 在控制台中查看消息路由日志
+
+### 3. 错误处理
 
 ```javascript
 function sendMessageWithErrorHandling(message) {
@@ -376,7 +547,7 @@ function sendMessageWithErrorHandling(message) {
 // 使用示例
 try {
   const response = await sendMessageWithErrorHandling({
-    action: 'forwardToContentScript',
+    action: 'message',
     data: { action: 'test' }
   });
   console.log('成功:', response);
@@ -385,46 +556,46 @@ try {
 }
 ```
 
-### 消息追踪
+## 📊 性能优化
 
-系统自动为每个消息分配唯一的 `messageId`，用于追踪和调试：
+### 1. 消息缓存
 
 ```javascript
-const message = {
-  action: 'forwardToContentScript',
-  data: { action: 'test' }
-};
+// 避免重复发送相同的消息
+const messageCache = new Map();
 
-chrome.runtime.sendMessage(message, (response) => {
-  console.log(`消息 ${response.messageId} 处理完成`);
-});
-```
-
-## 🛠️ 调试和监控
-
-### 控制台日志
-
-系统会在 Background Script 的控制台中输出详细的日志信息：
-
-```
-📡 消息路由器已初始化
-📋 [2024-01-01T12:00:00.000Z] RECEIVED: {
-  messageId: "msg_1704110400000_abc123",
-  action: "forwardToContentScript",
-  sender: { ... }
-}
-📋 [2024-01-01T12:00:00.100Z] RESPONSE: {
-  success: true,
-  target: "content-script",
-  tabId: 123
+function sendMessageWithCache(data, target = null) {
+  const key = JSON.stringify({ data, target });
+  
+  if (messageCache.has(key)) {
+    return messageCache.get(key);
+  }
+  
+  const promise = chromeApi.sendMessage(data, target);
+  messageCache.set(key, promise);
+  
+  // 5秒后清除缓存
+  setTimeout(() => messageCache.delete(key), 5000);
+  
+  return promise;
 }
 ```
 
-### 开发者工具
+### 2. 批量操作
 
-1. 打开 Chrome 扩展管理页面
-2. 找到你的扩展，点击「检查视图」→「背景页」
-3. 在控制台中查看消息路由日志
+```javascript
+// 批量应用样式
+const styleOperations = [
+  { action: 'pageBeautify.applyTheme', theme: 'dark' },
+  { action: 'pageBeautify.clearStyles' },
+  { action: 'pageBeautify.applyStyles', css: 'body { margin: 0; }' }
+];
+
+// 并行执行
+const results = await Promise.all(
+  styleOperations.map(op => chromeApi.sendMessage(op))
+);
+```
 
 ## 📝 最佳实践
 
@@ -433,7 +604,7 @@ chrome.runtime.sendMessage(message, (response) => {
 ```javascript
 // ✅ 好的命名
 {
-  action: 'forwardToContentScript',
+  action: 'message',
   data: {
     action: 'pageBeautify.applyTheme',
     theme: 'dark'
@@ -472,7 +643,7 @@ chrome.runtime.sendMessage(message, (response) => {
 ```javascript
 // ✅ 结构化的数据
 {
-  action: 'forwardToContentScript',
+  action: 'message',
   data: {
     action: 'ui.updateElement',
     payload: {
@@ -495,7 +666,7 @@ chrome.runtime.sendMessage(message, (response) => {
 ```javascript
 // ✅ 批量操作
 const batchMessage = {
-  action: 'forwardToContentScript',
+  action: 'message',
   data: {
     action: 'ui.batchUpdate',
     operations: [
@@ -545,6 +716,13 @@ chrome.runtime.sendMessage({
 });
 ```
 
+## 🔒 安全注意事项
+
+1. **消息验证**：系统会自动验证消息格式和来源
+2. **权限检查**：确保发送者有权限执行请求的操作
+3. **数据清理**：自动清理和验证消息数据
+4. **错误隔离**：错误不会影响其他消息的处理
+
 ## 📚 API 参考
 
 ### MessageRouter 类
@@ -554,6 +732,7 @@ chrome.runtime.sendMessage({
 - `handleMessage(message, sender, sendResponse)` - 处理消息的主入口
 - `validateMessage(message, sender)` - 验证消息格式
 - `routeMessage(message, sender, sendResponse)` - 路由消息到目标
+- `smartRoute(message, sender)` - 智能路由（自动识别发送者）
 - `forwardToContentScript(message, sender)` - 转发到内容脚本
 - `forwardToPopup(message, sender)` - 转发到弹窗
 - `forwardToSidePanel(message, sender)` - 转发到侧栏
@@ -566,6 +745,21 @@ const router = new MessageRouter();
 router.retryCount = 3;        // 重试次数
 router.retryDelay = 1000;     // 重试延迟（毫秒）
 ```
+
+## 🎉 总结
+
+新的简化消息系统具有以下优势：
+
+✅ **简单易用**：只需要一个统一的 action  
+✅ **智能路由**：自动识别发送者和目标  
+✅ **向后兼容**：现有代码无需修改  
+✅ **错误处理**：完善的错误处理和重试机制  
+✅ **性能优化**：支持消息缓存和批量操作  
+✅ **安全可靠**：内置消息验证和权限检查  
+✅ **消息队列**：支持离线消息队列，确保消息不丢失  
+✅ **调试友好**：详细的日志记录和错误追踪  
+
+通过这个简化的消息系统，你可以更轻松地管理 Chrome 扩展中的消息传递，专注于业务逻辑的实现。
 
 ---
 
