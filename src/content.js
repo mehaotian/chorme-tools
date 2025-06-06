@@ -331,6 +331,8 @@ function initializeTimerDisplay() {
           if (timerState) {
             globalTimerDisplay.updateDisplay(timerState);
           }
+        } else if (data.action === "timer.stop") {
+          globalTimerDisplay.hideTimer();
         }
       }
     });

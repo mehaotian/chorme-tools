@@ -1,11 +1,18 @@
 <script setup>
-import { ref, watchEffect } from 'vue'
+import { ref, watchEffect, watch } from 'vue'
 import { chromeApi } from "../services/chrome-api";
 import { Utils } from "../core/utils.js";
+
+const model = defineModel()
+
+console.log(model.value)
 // tab 状态
 let currentTab = ref('preset')
 let hoursInput = ref(0)
 let minutesInput = ref(0)
+
+let showTimer = ref(false)
+
 
 watchEffect(() => {
   if (hoursInput.value > 24) {
@@ -72,7 +79,6 @@ const startTimer = async (minutes) => {
       minutes: totalMinutes
     }
   })
-  console.log(res)
 }
 
 
@@ -82,22 +88,20 @@ const startTimer = async (minutes) => {
 const cannelTimer = async () => {
   // 关闭定时器选择窗口
   // TODO
-
+  model.value = false
 }
-
-
 
 
 </script>
 <template>
-  <div class="timer-settings-overlay">
+  <div v-if="model" class="timer-settings-overlay">
     <div class="timer-settings-modal">
       <div class="timer-settings-header">
         <h3>设置自律提醒时间</h3>
         <button class="close-btn" type="button" @click="cannelTimer">&times;</button>
       </div>
       <div class="timer-settings-content">
-        <div class="timer-status" id="timer-status" style="display: none;">
+        <div v-if="showTimer" class="timer-status">
           <div class="status-info">
             <span class="status-text" id="status-text">计时器正在运行中...</span>
             <span class="remaining-time" id="remaining-time"></span>
@@ -107,7 +111,7 @@ const cannelTimer = async () => {
             <button class="stop-timer-btn" type="button">停止计时器</button>
           </div>
         </div>
-        <div class="time-input-group" id="time-input-group">
+        <div v-else class="time-input-group" id="time-input-group">
           <div class="input-mode-toggle">
             <button class="mode-btn" :class="{ active: currentTab === 'preset' }" data-mode="preset"
               @click="onModeClick('preset')">快速选择</button>

@@ -1,10 +1,15 @@
 <script setup>
+import { ref } from 'vue'
 import TImerSetting from '../components/TImerSetting.vue';
+
+let isOpenTimer = ref(false)
+
+
 const clickHandler = (type) => {
   switch (type) {
     // 自律提醒
     case 'reading':
-
+      isOpenTimer.value = true
       break;
     // 统计字数
     case 'stat':
@@ -140,7 +145,7 @@ async function openSidebar() {
     <div class="footer">
       <p class="version">版本 1.0</p>
     </div>
-    <TImerSetting></TImerSetting>
+    <TImerSetting v-model="isOpenTimer"></TImerSetting>
   </div>
 </template>
 

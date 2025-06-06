@@ -4,8 +4,11 @@
       <div class="timer-label-text">
         距离休息还有
       </div>
-      <div class="timer-time-display">{{ formatTimeDisplay(minutes)}}</div>
+      <div class="timer-time-display">{{ formatTimeDisplay(minutes) }}</div>
       <div class="timer-status-text">疯狂摄取知识中</div>
+    </div>
+    <div class="timer-hover-overlay">
+      <button class="timer-stop-button" @click="stopTImer">⏹ 停止自律</button>
     </div>
   </div>
 
@@ -13,6 +16,7 @@
 
 <script setup>
 import { unref } from 'vue'
+import { chromeApi } from "../services/chrome-api";
 
 defineProps({
   // 定义属性
@@ -22,6 +26,17 @@ defineProps({
     default: 0
   }
 })
+
+const stopTImer = async () => {
+  console.log('停止定时器')
+  const res = await chromeApi.sendMessage({
+    action: 'pageTimer',
+    data: {
+      action: 'timer.stop'
+    }
+  })
+}
+
 /**
   * 格式化时间显示
   * @param {number} totalSeconds - 总秒数
@@ -59,13 +74,13 @@ function formatTimeDisplay(seconds) {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   color: white;
-  padding: 18px;
+  padding: 18px !important;
   border-radius: 16px;
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1);
   z-index: 2147483647;
   font-family: 'Digital', BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  min-width: 100px;
+  min-width: 100px !important;
   user-select: none;
   transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
   overflow: hidden;
@@ -108,6 +123,11 @@ function formatTimeDisplay(seconds) {
   z-index: 10;
 }
 
+.deep-work-timer:hover .timer-hover-overlay {
+  opacity: 1;
+  visibility: visible;
+}
+
 .timer-hover-overlay.visible {
   opacity: 1;
   visibility: visible;
@@ -130,6 +150,7 @@ function formatTimeDisplay(seconds) {
   align-items: center;
   gap: 6px;
   transform: scale(0.9);
+  cursor: pointer;
 }
 
 .timer-stop-button:hover {
@@ -155,16 +176,16 @@ function formatTimeDisplay(seconds) {
 }
 
 .timer-time-display {
-  font-size: 22px;
+  font-size: 22px !important;
   font-weight: bold;
   font-family: 'Digital', 'Courier New', 'Lucida Console', monospace;
   text-shadow: 0 0 10px rgba(255, 183, 77, 0.8), 0 0 20px rgba(255, 183, 77, 0.4), 0 0 30px rgba(255, 183, 77, 0.2);
-  letter-spacing: 2px;
+  letter-spacing: 2px !important;
   z-index: 10;
   position: relative;
   color: #FFB74D;
   background: rgba(0, 0, 0, 0.2);
-  padding: 6px 12px;
+  padding: 6px 12px !important;
   line-height: 1;
   border-radius: 8px;
   border: 1px solid rgba(255, 183, 77, 0.3);

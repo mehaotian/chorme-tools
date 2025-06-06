@@ -538,6 +538,8 @@ class MessageRouter {
     } else if (action === "timer.get") {
       const timerState = await this.globaTimer.getTimerState();
       message.data.timerState = timerState;
+    }else if(action === "timer.stop"){
+      await this.globaTimer.stopTimer();
     }
 
     // 消息最终也是要转发到content script
