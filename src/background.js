@@ -402,10 +402,11 @@ class MessageRouter {
 
       return {
         success: true,
-        data: response,
+        response,
         target: "content-script",
         tabId: targetTabId,
         messageId: message.messageId,
+        ...forwardMessage
       };
     } catch (error) {
       // 如果content script未加载，尝试注入
@@ -529,10 +530,16 @@ class MessageRouter {
     console.log("🚀 处理定时器消息:", message);
     const data = message.data;
     const minutes = data.minutes;
-    try {
+    const action = data.action;
+    console.log("-=-=-=", action);
+    if (action === "timer.start") {
       await this.globaTimer.startTimer(minutes);
-    } catch (error) {}
-    message.data.remainingSeconds = message.data.minutes * 60;
+      message.data.remainingSeconds = message.data.minutes * 60;
+    } else if (action === "timer.get") {
+      const timerState = await this.globaTimer.getTimerState();
+      message.data.timerState = timerState;
+    }
+
     // 消息最终也是要转发到content script
     return await this.forwardToContentScript(
       {

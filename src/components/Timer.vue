@@ -71,6 +71,7 @@ function formatTimeDisplay(seconds) {
   overflow: hidden;
   will-change: transform, opacity;
   transform: translateZ(0);
+  opacity: 0;
 }
 
 .deep-work-timer.timer-active {
@@ -163,7 +164,8 @@ function formatTimeDisplay(seconds) {
   position: relative;
   color: #FFB74D;
   background: rgba(0, 0, 0, 0.2);
-  padding: 0px 12px;
+  padding: 6px 12px;
+  line-height: 1;
   border-radius: 8px;
   border: 1px solid rgba(255, 183, 77, 0.3);
 }
