@@ -321,19 +321,6 @@ function initializeTimerDisplay() {
       if (!globalTimerDisplay || globalTimerDisplay.isDestroyed) {
         return;
       }
-
-      //   try {
-      //     if (request.action === "timerUpdate") {
-      //       globalTimerDisplay.updateDisplay(request.timerState);
-      //     } else if (request.action === "timerComplete") {
-      //       globalTimerDisplay.showRestReminder(request.totalMinutes);
-      //     } else if (request.action === "timerStopped") {
-      //       globalTimerDisplay.hideTimer();
-      //     }
-      //   } catch (error) {
-      //     console.error("Error handling timer message:", error.message);
-      //   }
-
       const data = request.data;
       if (data) {
         console.log("----", data.action);

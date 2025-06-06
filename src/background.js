@@ -370,7 +370,7 @@ class MessageRouter {
     // 如果没有指定标签页ID，获取当前激活的标签页
     if (!targetTabId) {
       try {
-        const [activeTab] = await chrome.tabs.query({
+        const [activeTab] = ({
           active: true,
           currentWindow: true,
         });

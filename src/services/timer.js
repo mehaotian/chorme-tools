@@ -247,26 +247,14 @@ export class GlobalTimerManager {
     };
 
     try {
-      const tabs = await chrome.tabs.query({});
-      // 确定广播页面和排除广播页面
-      const validTabs = tabs.filter(
-        (tab) =>
-          tab.id &&
-          tab.url &&
-          !tab.url.startsWith("chrome://") &&
-          !tab.url.startsWith("chrome-extension://") &&
-          !tab.url.startsWith("moz-extension://")
-      );
-
-      // 使用Promise.allSettled来并行发送消息，避免单个失败影响其他
-      const results = await Promise.allSettled(
-        validTabs.map((tab) =>
-          chrome.tabs.sendMessage(tab.id, msgData).catch((error) => {
-            // 记录但不抛出错误
-            console.debug(`未能将消息发送到选项卡 ${tab.id}:`, error.message);
-          })
-        )
-      );
+      const [activeTab] = await chrome.tabs.query({
+        active: true,
+        currentWindow: true,
+      });
+      console.log(activeTab && activeTab.id);
+      if (activeTab && activeTab.id) {
+        chrome.tabs.sendMessage(activeTab.id, msgData);
+      }
 
       // 统计成功和失败的数量（仅在开发模式下）
       try {
