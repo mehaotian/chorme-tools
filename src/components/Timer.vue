@@ -4,7 +4,7 @@
       <div class="timer-label-text">
         距离休息还有
       </div>
-      <div class="timer-time-display">12:11</div>
+      <div class="timer-time-display">{{ formatTimeDisplay(minutes)}}</div>
       <div class="timer-status-text">疯狂摄取知识中</div>
     </div>
   </div>
@@ -12,15 +12,44 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { unref } from 'vue'
 
-// 定义响应式数据
-const count = ref(0)
+defineProps({
+  // 定义属性
+  minutes: {
+    type: Number,
+    required: true,
+    default: 0
+  }
+})
+/**
+  * 格式化时间显示
+  * @param {number} totalSeconds - 总秒数
+  * @param {number} originalMinutes - 原始分钟数（用于进度计算）
+  * @returns {string} 格式化的HTML内容
+  */
+function formatTimeDisplay(seconds) {
+  const totalSeconds = unref(seconds)
+  const hours = Math.floor(totalSeconds / 3600);
+  const mins = Math.floor((totalSeconds % 3600) / 60);
+  const secs = totalSeconds % 60;
+
+  let timeText = "";
+  if (hours > 0) {
+    timeText = `${hours.toString().padStart(2, "0")}:${mins
+      .toString()
+      .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  } else {
+    timeText = `${mins.toString().padStart(2, "0")}:${secs
+      .toString()
+      .padStart(2, "0")}`;
+  }
+  return timeText
+}
 
 </script>
 
 <style scoped>
-
 /* 定时器主体样式 */
 .deep-work-timer {
   position: fixed;
@@ -134,7 +163,7 @@ const count = ref(0)
   position: relative;
   color: #FFB74D;
   background: rgba(0, 0, 0, 0.2);
-  padding: 6px 12px;
+  padding: 0px 12px;
   border-radius: 8px;
   border: 1px solid rgba(255, 183, 77, 0.3);
 }

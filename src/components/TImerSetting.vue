@@ -1,9 +1,26 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, watchEffect } from 'vue'
 import { chromeApi } from "../services/chrome-api";
+import { Utils } from "../core/utils.js";
 // tab 状态
 let currentTab = ref('preset')
-// 时间状态
+let hoursInput = ref(0)
+let minutesInput = ref(0)
+
+watchEffect(() => {
+  if (hoursInput.value > 24) {
+    hoursInput.value = 24
+  }
+  if (hoursInput.value < 0) {
+    hoursInput.value = 0
+  }
+  if (minutesInput.value > 59) {
+    minutesInput.value = 59
+  }
+  if (minutesInput.value < 0) {
+    minutesInput.value = 0
+  }
+})
 
 /**
  * 切换tab
@@ -17,14 +34,47 @@ const onModeClick = (tabName) => {
  * 激活定时器
  * @param minutes 分钟
  */
-const selectTime = (minutes) => {
+const startTimer = async (minutes) => {
+  console.log('-----', minutes)
+  let totalMinutes = minutes
   // 选择时间
   if (minutes) {
-
+    totalMinutes = minutes
   } else {
     // 自定义时间
+    const hours = hoursInput.value
+    const minutes = minutesInput.value
+
+    if (!hours && !minutes) {
+      Utils.showToast('请设置至少1分钟的计时时间！')
+      return
+    }
+
+    totalMinutes = hours * 60 + minutes;
+
   }
+
+  if (totalMinutes < 1) {
+    Utils.showToast("请设置至少1分钟的计时时间！", "warning");
+    return;
+  }
+
+  if (totalMinutes > 24 * 60) {
+    Utils.showToast("计时时间不能超过24小时！", "warning");
+    return;
+  }
+
+
+  const res = await chromeApi.sendMessage({
+    action: 'pageTimer',
+    data: {
+      action: 'timer.start',
+      minutes: totalMinutes
+    }
+  })
+  console.log(res)
 }
+
 
 /**
  * 关闭窗口
@@ -32,13 +82,7 @@ const selectTime = (minutes) => {
 const cannelTimer = async () => {
   // 关闭定时器选择窗口
   // TODO
-  const res = await chromeApi.sendMessage({
-    action: 'forwardToContentScript',
-    data: {
-      action: 'timer.open',
-    }
-  })
-  console.log(res)
+
 }
 
 
@@ -73,14 +117,14 @@ const cannelTimer = async () => {
 
           <div v-if="currentTab === 'preset'" class="preset-mode" id="preset-mode">
             <div class="preset-buttons">
-              <button class="preset-btn" data-minutes="10" @click="selectTime(10)">10分钟</button>
-              <button class="preset-btn" data-minutes="25" @click="selectTime(25)">25分钟</button>
-              <button class="preset-btn" data-minutes="45" @click="selectTime(45)">45分钟</button>
-              <button class="preset-btn" data-minutes="60" @click="selectTime(60)">1小时</button>
-              <button class="preset-btn" data-minutes="120" @click="selectTime(120)">2小时</button>
-              <button class="preset-btn" data-minutes="300" @click="selectTime(300)">5小时</button>
-              <button class="preset-btn" data-minutes="720" @click="selectTime(720)">12小时</button>
-              <button class="preset-btn" data-minutes="1440" @click="selectTime(1440)">24小时</button>
+              <button class="preset-btn" data-minutes="10" @click="startTimer(10)">10分钟</button>
+              <button class="preset-btn" data-minutes="25" @click="startTimer(25)">25分钟</button>
+              <button class="preset-btn" data-minutes="45" @click="startTimer(45)">45分钟</button>
+              <button class="preset-btn" data-minutes="60" @click="startTimer(60)">1小时</button>
+              <button class="preset-btn" data-minutes="120" @click="startTimer(120)">2小时</button>
+              <button class="preset-btn" data-minutes="300" @click="startTimer(300)">5小时</button>
+              <button class="preset-btn" data-minutes="720" @click="startTimer(720)">12小时</button>
+              <button class="preset-btn" data-minutes="1440" @click="startTimer(1440)">24小时</button>
             </div>
           </div>
 
@@ -88,11 +132,11 @@ const cannelTimer = async () => {
             <label>自定义倒计时时间：</label>
             <div class="time-inputs">
               <div class="time-input-item">
-                <input type="number" id="timer-hours" min="0" max="24" step="1" placeholder="0" />
+                <input type="number" v-model="hoursInput" min="0" max="24" step="1" placeholder="0" />
                 <span class="time-unit">小时</span>
               </div>
               <div class="time-input-item">
-                <input type="number" id="timer-minutes" min="0" max="59" step="1" placeholder="0" />
+                <input type="number" v-model="minutesInput" min="0" max="59" step="1" placeholder="0" />
                 <span class="time-unit">分钟</span>
               </div>
             </div>
@@ -100,7 +144,7 @@ const cannelTimer = async () => {
           </div>
         </div>
         <div v-if="currentTab === 'custom'" class="action-buttons">
-          <button class="start-timer-btn" type="button">开始自律</button>
+          <button class="start-timer-btn" @click="startTimer(null)">开始自律</button>
           <button class="cancel-btn" type="button" @click="cannelTimer">取消</button>
         </div>
       </div>

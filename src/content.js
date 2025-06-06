@@ -1,13 +1,22 @@
 console.log("content script loaded");
-import { createApp } from "vue";
+import { createApp, ref } from "vue";
 import Timer from "./components/Timer.vue";
-
+let minutes = ref(0);
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   const data = request.data;
-  if (data && data.action === "timer.open") {
-    createTimer();
+  if (data) {
+    console.log('----',data.action);
+    if (data.action === "timer.start") {
+      minutes.value = data.remainingSeconds;
+      createTimer();
+    } else if (data.action === "timer.update") {
+      const timerState = data.timerState;
+      if (timerState) {
+        minutes.value = timerState.remainingSeconds;
+      }
+      createTimer();
+    }
   }
-  console.log("message received", request);
 });
 
 function createTimer() {
@@ -17,7 +26,7 @@ function createTimer() {
   const root = document.createElement("div");
   root.id = "do-root";
   document.body.append(root);
-  const app = createApp(Timer);
+  const app = createApp(Timer, { minutes });
   app.mount(root);
 }
 

@@ -3,7 +3,7 @@
  * 负责处理所有组件间的消息转发和路由
  * 支持 popup、content-scripts、侧栏等组件的统一通信
  */
-
+import { GlobalTimerManager } from "./services/timer.js";
 /**
  * 消息路由管理器
  * 统一处理所有消息的转发和路由
@@ -15,7 +15,7 @@ class MessageRouter {
     this.messageQueue = new Map();
     this.retryCount = 3;
     this.retryDelay = 1000;
-
+    this.globaTimer = new GlobalTimerManager();
     this.initializeRouter();
   }
 
@@ -154,7 +154,10 @@ class MessageRouter {
           case "broadcastMessage":
             result = await this.broadcastMessage(message, sender);
             break;
-
+          // 定时器相关消息
+          case "pageTimer":
+            result = await this.handlePageTimerMessage(message, sender);
+            break;
           // 页面美化相关消息
           case "pageBeautify":
             result = await this.handlePageBeautifyMessage(message, sender);
@@ -367,10 +370,13 @@ class MessageRouter {
     // 如果没有指定标签页ID，获取当前激活的标签页
     if (!targetTabId) {
       try {
-        const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        const [activeTab] = await chrome.tabs.query({
+          active: true,
+          currentWindow: true,
+        });
         targetTabId = activeTab?.id;
       } catch (error) {
-        console.warn('获取当前激活标签页失败:', error);
+        console.warn("获取当前激活标签页失败:", error);
       }
     }
 
@@ -512,6 +518,29 @@ class MessageRouter {
       messageId: message.messageId,
       queued: true,
     };
+  }
+
+  /**
+   * 处理定时器消息
+   * @param {*} message
+   * @param {*} sender
+   */
+  async handlePageTimerMessage(message, sender) {
+    console.log("🚀 处理定时器消息:", message);
+    const data = message.data;
+    const minutes = data.minutes;
+    try {
+      await this.globaTimer.startTimer(minutes);
+    } catch (error) {}
+    message.data.remainingSeconds = message.data.minutes * 60;
+    // 消息最终也是要转发到content script
+    return await this.forwardToContentScript(
+      {
+        action: message.action,
+        data: message.data,
+      },
+      sender
+    );
   }
 
   /**
@@ -826,7 +855,7 @@ class MessageRouter {
     try {
       await chrome.scripting.executeScript({
         target: { tabId },
-        files: ["src/content-script.js"],
+        files: ["src/content.js"],
       });
       console.log(`✅ Content script已注入到标签页 ${tabId}`);
     } catch (error) {
@@ -875,9 +904,9 @@ class MessageRouter {
     const senderInfo = sender ? this.getSenderInfo(sender) : null;
 
     console.log(`📋 [${timestamp}] ${type.toUpperCase()}:`, {
-      messageId: message.messageId || 'unknown',
-      action: message.action || 'unknown',
-      type: message.type || 'unknown',
+      messageId: message.messageId || "unknown",
+      action: message.action || "unknown",
+      type: message.type || "unknown",
       sender: senderInfo,
       data: message.data ? Object.keys(message.data) : null,
     });

@@ -21,7 +21,7 @@ export class Utils {
    * @param {string} type - 消息类型 (success, error, warning, info)
    * @param {number} duration - 显示时长(毫秒)
    */
-  static showToast(message, type = 'info', duration = 3000) {
+  static showToast(message, type = 'warning', duration = 3000) {
     // 移除已存在的toast
     const existingToast = document.querySelector('.toast-message');
     if (existingToast) {
@@ -40,7 +40,6 @@ export class Utils {
       right: '20px',
       padding: '12px 24px',
       borderRadius: '8px',
-      color: 'white',
       fontWeight: '500',
       fontSize: '14px',
       zIndex: '10000',
