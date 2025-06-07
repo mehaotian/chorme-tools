@@ -370,10 +370,10 @@ class MessageRouter {
     // 如果没有指定标签页ID，获取当前激活的标签页
     if (!targetTabId) {
       try {
-        const [activeTab] = ({
+        const [activeTab] = {
           active: true,
           currentWindow: true,
-        });
+        };
         targetTabId = activeTab?.id;
       } catch (error) {
         console.warn("获取当前激活标签页失败:", error);
@@ -406,7 +406,7 @@ class MessageRouter {
         target: "content-script",
         tabId: targetTabId,
         messageId: message.messageId,
-        ...forwardMessage
+        ...forwardMessage,
       };
     } catch (error) {
       // 如果content script未加载，尝试注入
@@ -447,6 +447,12 @@ class MessageRouter {
     // popup通信通常通过runtime.sendMessage实现
     // 这里主要是存储消息供popup获取
     const { data } = message;
+    console.log("DATA", data);
+    if (data && data.action === "timer.get") {
+      console.log("DATA", data);
+      const timerState = await this.globaTimer.getTimerState();
+      data.timerState = timerState;
+    }
 
     const forwardMessage = {
       ...(data || {}),
@@ -538,7 +544,7 @@ class MessageRouter {
     } else if (action === "timer.get") {
       const timerState = await this.globaTimer.getTimerState();
       message.data.timerState = timerState;
-    }else if(action === "timer.stop"){
+    } else if (action === "timer.stopped") {
       await this.globaTimer.stopTimer();
     }
 

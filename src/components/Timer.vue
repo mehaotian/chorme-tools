@@ -21,7 +21,7 @@ import { chromeApi } from "../services/chrome-api";
 defineProps({
   // 定义属性
   minutes: {
-    type: Number,
+    type: Object,
     required: true,
     default: 0
   }
@@ -32,7 +32,7 @@ const stopTImer = async () => {
   const res = await chromeApi.sendMessage({
     action: 'pageTimer',
     data: {
-      action: 'timer.stop'
+      action: 'timer.stopped'
     }
   })
 }

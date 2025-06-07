@@ -4,6 +4,13 @@ import { chromeApi } from "../services/chrome-api";
 import { Utils } from "../core/utils.js";
 
 const model = defineModel()
+const props = defineProps({
+  start: {
+    type: Boolean,
+    required: true,
+    default: false
+  }
+})
 
 console.log(model.value)
 // tab 状态
@@ -11,7 +18,8 @@ let currentTab = ref('preset')
 let hoursInput = ref(0)
 let minutesInput = ref(0)
 
-let showTimer = ref(false)
+let showTimer = ref(props.start)
+console.log('showTimer', showTimer.value);
 
 
 watchEffect(() => {
@@ -42,7 +50,6 @@ const onModeClick = (tabName) => {
  * @param minutes 分钟
  */
 const startTimer = async (minutes) => {
-  console.log('-----', minutes)
   let totalMinutes = minutes
   // 选择时间
   if (minutes) {
@@ -71,7 +78,6 @@ const startTimer = async (minutes) => {
     return;
   }
 
-
   const res = await chromeApi.sendMessage({
     action: 'pageTimer',
     data: {
@@ -79,6 +85,8 @@ const startTimer = async (minutes) => {
       minutes: totalMinutes
     }
   })
+
+  model.value = false
 }
 
 
@@ -101,6 +109,7 @@ const cannelTimer = async () => {
         <button class="close-btn" type="button" @click="cannelTimer">&times;</button>
       </div>
       <div class="timer-settings-content">
+        {{ showTimer }}
         <div v-if="showTimer" class="timer-status">
           <div class="status-info">
             <span class="status-text" id="status-text">计时器正在运行中...</span>

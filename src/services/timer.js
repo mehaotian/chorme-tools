@@ -50,6 +50,7 @@ export class GlobalTimerManager {
       isActive: true,
       totalMinutes: minutes,
       remainingSeconds: minutes * 60,
+      // remainingSeconds: 5,
       startTime: Date.now(),
       isPaused: false,
       pausedTime: null,

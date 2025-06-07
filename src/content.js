@@ -1,5 +1,6 @@
 import { createApp, ref } from "vue";
 import Timer from "./components/Timer.vue";
+import TimerOverlay from "./components/TimerOverlay.vue";
 // let minutes = ref(0);
 // chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 //   const data = request.data;
@@ -62,8 +63,6 @@ class GlobalTimerDisplay {
    * 创建定时器显示元素
    */
   createTimerElement(minutes) {
-    console.log("----", this.timerElement, this.isDestroyed);
-
     if (this.timerElement || this.isDestroyed) {
       return;
     }
@@ -108,6 +107,12 @@ class GlobalTimerDisplay {
     if (!this.timerElement || this.isDestroyed) return;
     const dom = this.timerElement.querySelector(".deep-work-timer");
     dom.classList.add("timer-hiding");
+    console.log(
+      "----- 删除",
+      this.timerElement,
+      this.timerElement.parentNode,
+      !this.isDestroyed
+    );
 
     const hideTimeout = setTimeout(() => {
       if (
@@ -194,6 +199,61 @@ class GlobalTimerDisplay {
     }
 
     this.updateTimerContent(timerState);
+  }
+
+  /**
+   * 显示休息提醒
+   * @param {number} totalMinutes - 总计时分钟数
+   */
+  showRestReminder(minutes) {
+    this.hideTimer();
+
+    // // 创建休息提醒界面
+    // const reminderElement = document.createElement("div");
+    // reminderElement.id = "do-rest-reminder";
+    // reminderElement.innerHTML = `
+    //   <div class="rest-overlay">
+    //     <div class="rest-content">
+    //       <div class="rest-icon">🎉</div>
+    //       <h2 class="rest-title">L站虽好，但也要注意节制哦~</h2>
+    //       <p class="rest-message">您已经学习 ${totalMinutes} 分钟，超过0.1%佬友</p>
+    //       <p class="rest-message">佬友你太牛逼了！！！</p>
+    //       <p class="rest-tip">建议休息 5-10 分钟，放松一下眼睛和身体</p>
+    //       <div class="rest-actions">
+    //         <button class="close-btn">关闭提醒</button>
+    //       </div>
+    //     </div>
+    //   </div>
+    // `;
+
+    // const closeBtn = reminderElement.querySelector(".close-btn");
+
+    // const closeReminder = () => {
+    //   if (document.body.contains(reminderElement)) {
+    //     document.body.removeChild(reminderElement);
+    //   }
+    // };
+
+    // if (closeBtn) {
+    //   closeBtn.addEventListener("click", closeReminder);
+    // }
+
+    // setTimeout(closeReminder, 30000);
+
+    // document.body.appendChild(reminderElement);
+
+    // /   if (document.getElementById("do-root")) return;
+
+    let root = document.querySelector("#do-rest-reminder");
+    if (root) {
+      root.parentNode.removeChild(root);
+    }
+    root = document.createElement("div");
+    root.id = "do-rest-reminder";
+
+    document.body.append(root);
+    const app = createApp(TimerOverlay, { minutes, show: true });
+    app.mount(root);
   }
 
   /**
@@ -331,8 +391,10 @@ function initializeTimerDisplay() {
           if (timerState) {
             globalTimerDisplay.updateDisplay(timerState);
           }
-        } else if (data.action === "timer.stop") {
+        } else if (data.action === "timer.stopped") {
           globalTimerDisplay.hideTimer();
+        } else if (data.action === "timer.complete") {
+          globalTimerDisplay.showRestReminder(data.totalMinutes || 0);
         }
       }
     });

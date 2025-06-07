@@ -1,15 +1,32 @@
 <script setup>
 import { ref } from 'vue'
 import TImerSetting from '../components/TImerSetting.vue';
+import { chromeApi } from '../services/chrome-api';
 
 let isOpenTimer = ref(false)
+let isStart = ref(false)
 
-
-const clickHandler = (type) => {
+const clickHandler = async (type) => {
   switch (type) {
     // 自律提醒
     case 'reading':
+      const res = await chromeApi.sendMessage({
+        action: 'toPopup',
+        data: {
+          action: 'timer.get'
+        }
+      })
+      console.log('res', res);
+
+      const timerState = res?.data?.timerState || {}
+      const isActive = timerState?.isActive || false
+      console.log('timerState', timerState);
+      console.log('isActive', isActive);
+      
+      
       isOpenTimer.value = true
+      isStart.value = isActive
+
       break;
     // 统计字数
     case 'stat':
@@ -145,7 +162,7 @@ async function openSidebar() {
     <div class="footer">
       <p class="version">版本 1.0</p>
     </div>
-    <TImerSetting v-model="isOpenTimer"></TImerSetting>
+    <TImerSetting v-model="isOpenTimer" :start="isStart"></TImerSetting>
   </div>
 </template>
 
