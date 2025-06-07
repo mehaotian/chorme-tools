@@ -20,11 +20,9 @@ export class MessageHandlers {
    * @returns {Promise<Object>} 处理结果
    */
   async handlePageTimerMessage(message, sender, forwardToContentScript) {
-    console.log("🚀 处理定时器消息:", message);
     const data = message.data;
     const minutes = data.minutes;
     const action = data.action;
-    console.log("-=-=-=", action);
     
     if (action === "timer.start") {
       await this.globalTimer.startTimer(minutes);

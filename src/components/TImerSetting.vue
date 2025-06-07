@@ -116,7 +116,6 @@ const cannelTimer = async () => {
         <button class="close-btn" type="button" @click="cannelTimer">&times;</button>
       </div>
       <div class="timer-settings-content">
-        {{ showTimer }}
         <div v-if="showTimer" class="timer-status">
           <div class="status-info">
             <span class="status-text" id="status-text">计时器正在运行中...</span>

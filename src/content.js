@@ -270,8 +270,6 @@ class GlobalTimerDisplay {
    * 检查现有定时器状态
    */
   checkExistingTimer() {
-    console.log('检查现有定时器状态',this.isDestroyed);
-    
     if (this.isDestroyed || !isExtensionContextValid()) {
       return;
     }

@@ -34,8 +34,6 @@ export class MessageRouter {
     try {
       // 验证消息格式
       const validation = this.validateMessage(message, sender);
-      console.log("📥 收到消息:", message);
-
       if (!validation.isValid) {
         console.warn("❌ 消息格式验证失败:", validation.error, message);
         sendResponse({
@@ -102,12 +100,8 @@ export class MessageRouter {
    */
   async routeMessage(message, sender, sendResponse) {
     const { action } = message;
-    console.log("🚀 路由消息:", message);
-
     try {
       let result;
-      console.log("🚀 路由消息:", message);
-
       // 自动识别发送者类型并智能路由
       if (action === "message" || action === "send") {
         result = await this.smartRoute(message, sender);
