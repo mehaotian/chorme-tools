@@ -18,11 +18,17 @@ let currentTab = ref('preset')
 let hoursInput = ref(0)
 let minutesInput = ref(0)
 
-let showTimer = ref(props.start)
-console.log('showTimer', showTimer.value);
+let showTimer = ref(false)
 
+// 监听 start 的变化
+watchEffect(() => {
+
+})
 
 watchEffect(() => {
+  if (props.start) {
+    showTimer.value = true
+  }
   if (hoursInput.value > 24) {
     hoursInput.value = 24
   }
