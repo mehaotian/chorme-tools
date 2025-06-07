@@ -1,3 +1,7 @@
+import { StorageService } from './storage.js';
+import { Utils } from '../core/utils.js';
+import { TIME_CONSTANTS, MESSAGE_CONSTANTS } from '../core/app-constants.js';
+
 /**
  * 全局定时器管理器
  * 确保全局只有一个定时器实例，在所有页面同步显示
@@ -49,7 +53,7 @@ export class GlobalTimerManager {
     this.timerState = {
       isActive: true,
       totalMinutes: minutes,
-      remainingSeconds: minutes * 60,
+      remainingSeconds: minutes * TIME_CONSTANTS.SECONDS_PER_MINUTE,
       // remainingSeconds: 5,
       startTime: Date.now(),
       isPaused: false,
@@ -81,7 +85,7 @@ export class GlobalTimerManager {
         // 广播当前状态到所有标签页
         await this.broadcastTimerState();
       }
-    }, 1000);
+    }, TIME_CONSTANTS.TIMER_UPDATE_INTERVAL);
   }
 
   /**
@@ -230,7 +234,7 @@ export class GlobalTimerManager {
       // 如果不是最后一次尝试，等待一段时间后重试
       if (attempt < retries) {
         await new Promise((resolve) =>
-          setTimeout(resolve, 100 * (attempt + 1))
+          setTimeout(resolve, TIME_CONSTANTS.RETRY_BASE_DELAY * (attempt + 1))
         );
       }
     }
@@ -252,7 +256,6 @@ export class GlobalTimerManager {
         active: true,
         currentWindow: true,
       });
-      console.log(activeTab && activeTab.id);
       if (activeTab && activeTab.id) {
         chrome.tabs.sendMessage(activeTab.id, msgData);
       }

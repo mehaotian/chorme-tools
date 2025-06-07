@@ -3,6 +3,8 @@
  * 提供ID生成、提示消息、验证、深拷贝等基础功能
  */
 
+import { UI_CONSTANTS, TIME_CONSTANTS } from './app-constants.js';
+
 /**
  * 工具类 - 提供各种通用的辅助方法
  */
@@ -21,7 +23,7 @@ export class Utils {
    * @param {string} type - 消息类型 (success, error, warning, info)
    * @param {number} duration - 显示时长(毫秒)
    */
-  static showToast(message, type = 'warning', duration = 3000) {
+  static showToast(message, type = 'warning', duration = UI_CONSTANTS.TOAST_DURATION) {
     // 移除已存在的toast
     const existingToast = document.querySelector('.toast-message');
     if (existingToast) {
@@ -613,7 +615,7 @@ export class Utils {
       // 聚焦到取消按钮（更安全的默认选择）
       setTimeout(() => {
         cancelBtn.focus();
-      }, 100);
+      }, UI_CONSTANTS.ANIMATION_DELAY);
     });
   }
 
@@ -742,7 +744,7 @@ export class Utils {
       setTimeout(() => {
         input.focus();
         input.select();
-      }, 100);
+      }, UI_CONSTANTS.ANIMATION_DELAY);
     });
   }
 

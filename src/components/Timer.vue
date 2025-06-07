@@ -17,6 +17,7 @@
 <script setup>
 import { unref } from 'vue'
 import { chromeApi } from "../services/chrome-api";
+import { TIME_CONSTANTS } from '../core/app-constants'
 
 defineProps({
   // 定义属性
@@ -45,9 +46,9 @@ const stopTImer = async () => {
   */
 function formatTimeDisplay(seconds) {
   const totalSeconds = unref(seconds)
-  const hours = Math.floor(totalSeconds / 3600);
-  const mins = Math.floor((totalSeconds % 3600) / 60);
-  const secs = totalSeconds % 60;
+  const hours = Math.floor(totalSeconds / TIME_CONSTANTS.SECONDS_PER_HOUR);
+  const mins = Math.floor((totalSeconds % TIME_CONSTANTS.SECONDS_PER_HOUR) / TIME_CONSTANTS.SECONDS_PER_MINUTE);
+  const secs = totalSeconds % TIME_CONSTANTS.SECONDS_PER_MINUTE;
 
   let timeText = "";
   if (hours > 0) {

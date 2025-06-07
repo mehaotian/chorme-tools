@@ -4,6 +4,7 @@
  */
 
 import { Utils } from '../core/utils.js';
+import { STORAGE_CONSTANTS, UI_CONSTANTS } from '../core/app-constants.js';
 import { APP_CONFIG } from '../core/constants.js';
 
 /**
@@ -247,12 +248,12 @@ export class StorageService {
           } else {
             // Chrome sync storage 限制为 100KB
             const total = 102400; // 100KB
-            const percentage = (bytesInUse / total) * 100;
+            const percentage = (bytesInUse / total) * UI_CONSTANTS.FULL_PERCENT;
             
             resolve({
               used: bytesInUse,
               total: total,
-              percentage: Math.round(percentage * 100) / 100,
+              percentage: Math.round(percentage * STORAGE_CONSTANTS.PERCENTAGE_PRECISION) / STORAGE_CONSTANTS.PERCENTAGE_PRECISION,
               formattedUsed: Utils.formatFileSize(bytesInUse),
               formattedTotal: Utils.formatFileSize(total)
             });

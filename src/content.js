@@ -1,34 +1,7 @@
 import { createApp, ref } from "vue";
 import Timer from "./components/Timer.vue";
 import TimerOverlay from "./components/TimerOverlay.vue";
-// let minutes = ref(0);
-// chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-//   const data = request.data;
-//   if (data) {
-//     console.log('----',data.action);
-//     if (data.action === "timer.start") {
-//       minutes.value = data.remainingSeconds;
-//       createTimer();
-//     } else if (data.action === "timer.update") {
-//       const timerState = data.timerState;
-//       if (timerState) {
-//         minutes.value = timerState.remainingSeconds;
-//       }
-//       createTimer();
-//     }
-//   }
-// });
-
-// function createTimer() {
-//   // 如果存在 ，不重复创建
-//   if (document.getElementById("do-root")) return;
-
-//   const root = document.createElement("div");
-//   root.id = "do-root";
-//   document.body.append(root);
-//   const app = createApp(Timer, { minutes });
-//   app.mount(root);
-// }
+import { UI_CONSTANTS } from './core/app-constants.js';
 
 /**
  * 全局定时器显示类
@@ -107,12 +80,6 @@ class GlobalTimerDisplay {
     if (!this.timerElement || this.isDestroyed) return;
     const dom = this.timerElement.querySelector(".deep-work-timer");
     dom.classList.add("timer-hiding");
-    console.log(
-      "----- 删除",
-      this.timerElement,
-      this.timerElement.parentNode,
-      !this.isDestroyed
-    );
 
     const hideTimeout = setTimeout(() => {
       if (
@@ -160,7 +127,7 @@ class GlobalTimerDisplay {
     setTimeout(() => {
       const dom = this.timerElement.querySelector(".deep-work-timer");
       dom.classList.add("timer-active");
-    }, 100);
+    }, UI_CONSTANTS.ANIMATION_DELAY);
   }
 
   /**
@@ -285,7 +252,6 @@ class GlobalTimerDisplay {
    * 处理页面可见性变化
    */
   handleVisibilityChange() {
-    console.log("页面显示了");
     if (!document.hidden && !this.isDestroyed) {
       this.checkExistingTimer();
     }
@@ -295,7 +261,6 @@ class GlobalTimerDisplay {
    * 处理窗口焦点变化
    */
   handleWindowFocus() {
-    console.log("页面聚焦了");
     if (!this.isDestroyed) {
       this.checkExistingTimer();
     }
@@ -305,6 +270,8 @@ class GlobalTimerDisplay {
    * 检查现有定时器状态
    */
   checkExistingTimer() {
+    console.log('检查现有定时器状态',this.isDestroyed);
+    
     if (this.isDestroyed || !isExtensionContextValid()) {
       return;
     }
@@ -313,7 +280,6 @@ class GlobalTimerDisplay {
       chrome.runtime.sendMessage(
         { action: "pageTimer", data: { action: "timer.get" } },
         (response) => {
-          console.log("timer.get", response);
           if (this.isDestroyed) return;
           if (chrome.runtime.lastError) {
             console.warn(
@@ -382,8 +348,9 @@ function initializeTimerDisplay() {
         return;
       }
       const data = request.data;
+      // console.log('action is',data.action,'data is',data);
+      
       if (data) {
-        console.log("----", data.action);
         if (data.action === "timer.start") {
           globalTimerDisplay.createTimerElement(data.remainingSeconds);
         } else if (data.action === "timer.update") {
@@ -395,6 +362,11 @@ function initializeTimerDisplay() {
           globalTimerDisplay.hideTimer();
         } else if (data.action === "timer.complete") {
           globalTimerDisplay.showRestReminder(data.totalMinutes || 0);
+        }else if (data.action === "timer.get") {
+          const timerState = data.timerState;
+          if (data && timerState && !timerState.isActive) {
+            globalTimerDisplay.hideTimer();
+          }
         }
       }
     });

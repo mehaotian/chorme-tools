@@ -266,13 +266,6 @@ export const APP_CONFIG = {
     APPLIED_THEME_ID: 'appliedThemeId'
   },
   
-  // UI配置
-  UI: {
-    TOAST_DURATION: 3000,
-    MODAL_ANIMATION_DURATION: 300,
-    DEBOUNCE_DELAY: 300
-  },
-  
   // 验证规则
   VALIDATION: {
     MAX_THEME_NAME_LENGTH: 50,
@@ -281,10 +274,10 @@ export const APP_CONFIG = {
     MAX_URL_PATTERN_LENGTH: 200
   },
   
-  // 重试配置
-  RETRY: {
-    MAX_RETRIES: 3,
-    RETRY_DELAY: 1000
+  // UI配置（非通用常量）
+  UI: {
+    MODAL_ANIMATION_DURATION: 300,
+    DEBOUNCE_DELAY: 300
   }
 };
 

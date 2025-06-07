@@ -5,6 +5,7 @@
  */
 
 import { Utils } from '../core/utils.js';
+import { MESSAGE_CONSTANTS } from '../core/app-constants.js';
 
 /**
  * Chrome API 服务类
@@ -13,7 +14,7 @@ import { Utils } from '../core/utils.js';
 export class ChromeApiService {
   constructor() {
     this.retryCount = 3;
-    this.retryDelay = 1000;
+    this.retryDelay = MESSAGE_CONSTANTS.RETRY_DELAY;
   }
 
   /**
@@ -23,7 +24,7 @@ export class ChromeApiService {
    * @param {number} timeout - 超时时间(毫秒)
    * @returns {Promise<any>} 响应结果
    */
-  async sendMessage(data, target = null, timeout = 5000) {
+  async sendMessage(data, target = null, timeout = MESSAGE_CONSTANTS.DEFAULT_TIMEOUT) {
     // 如果第一个参数是完整的消息对象（向后兼容）
     if (data && typeof data === 'object' && data.action && data.action !== 'message') {
       return this.sendMessageLegacy(data, target || timeout);
@@ -66,7 +67,7 @@ export class ChromeApiService {
    * @param {number} timeout - 超时时间(毫秒)
    * @returns {Promise<any>} 响应结果
    */
-  async sendMessageLegacy(message, timeout = 5000) {
+  async sendMessageLegacy(message, timeout = MESSAGE_CONSTANTS.DEFAULT_TIMEOUT) {
     return new Promise((resolve, reject) => {
       const timeoutId = setTimeout(() => {
         reject(new Error('消息发送超时'));

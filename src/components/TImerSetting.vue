@@ -2,6 +2,7 @@
 import { ref, watchEffect, watch } from 'vue'
 import { chromeApi } from "../services/chrome-api";
 import { Utils } from "../core/utils.js";
+import { TIME_CONSTANTS, VALIDATION_CONSTANTS } from '../core/app-constants'
 
 const model = defineModel()
 const props = defineProps({
@@ -29,8 +30,8 @@ watchEffect(() => {
   if (props.start) {
     showTimer.value = true
   }
-  if (hoursInput.value > 24) {
-    hoursInput.value = 24
+  if (hoursInput.value > VALIDATION_CONSTANTS.MAX_HOURS_INPUT) {
+    hoursInput.value = VALIDATION_CONSTANTS.MAX_HOURS_INPUT
   }
   if (hoursInput.value < 0) {
     hoursInput.value = 0
@@ -70,7 +71,7 @@ const startTimer = async (minutes) => {
       return
     }
 
-    totalMinutes = hours * 60 + minutes;
+    totalMinutes = hours * TIME_CONSTANTS.MINUTES_PER_HOUR + minutes;
 
   }
 
@@ -79,7 +80,7 @@ const startTimer = async (minutes) => {
     return;
   }
 
-  if (totalMinutes > 24 * 60) {
+  if (totalMinutes > TIME_CONSTANTS.MAX_TIMER_MINUTES) {
     Utils.showToast("计时时间不能超过24小时！", "warning");
     return;
   }
@@ -139,7 +140,7 @@ const cannelTimer = async () => {
               <button class="preset-btn" data-minutes="10" @click="startTimer(10)">10分钟</button>
               <button class="preset-btn" data-minutes="25" @click="startTimer(25)">25分钟</button>
               <button class="preset-btn" data-minutes="45" @click="startTimer(45)">45分钟</button>
-              <button class="preset-btn" data-minutes="60" @click="startTimer(60)">1小时</button>
+              <button class="preset-btn" data-minutes="60" @click="startTimer(TIME_CONSTANTS.MINUTES_PER_HOUR)">1小时</button>
               <button class="preset-btn" data-minutes="120" @click="startTimer(120)">2小时</button>
               <button class="preset-btn" data-minutes="300" @click="startTimer(300)">5小时</button>
               <button class="preset-btn" data-minutes="720" @click="startTimer(720)">12小时</button>
@@ -151,7 +152,7 @@ const cannelTimer = async () => {
             <label>自定义倒计时时间：</label>
             <div class="time-inputs">
               <div class="time-input-item">
-                <input type="number" v-model="hoursInput" min="0" max="24" step="1" placeholder="0" />
+                <input type="number" v-model="hoursInput" min="0" :max="VALIDATION_CONSTANTS.MAX_HOURS_INPUT" step="1" placeholder="0" />
                 <span class="time-unit">小时</span>
               </div>
               <div class="time-input-item">
